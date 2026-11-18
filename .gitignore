@@ -80,3 +80,6 @@ tmp/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Keep the Next.js frontend source library (global lib/ rule above is for Python).
+!frontend/lib/
