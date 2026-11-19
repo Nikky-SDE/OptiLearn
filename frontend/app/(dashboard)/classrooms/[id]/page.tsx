@@ -487,7 +487,7 @@ export default function ClassroomDetailPage({ params }: ClassroomDetailPageProps
               <div className="relative">
                 <Input
                   type="file"
-                  accept=".pdf,.doc,.docx,.txt,.md,.ppt,.pptx"
+                  accept=".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.gif,.bmp,.webp,.tiff"
                   onChange={handleFileUpload}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                   disabled={isUploading}
