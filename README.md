@@ -2,7 +2,7 @@
 
 OptiLearn is an AI learning companion for organizing classroom materials, indexing documents, and asking questions grounded in your course content.
 
-**Maintained by Nikky** · [GitHub](https://github.com/Nikky-SDE)
+**Built and developed by Nikky** · [GitHub](https://github.com/Nikky-SDE)
 
 ## Features
 

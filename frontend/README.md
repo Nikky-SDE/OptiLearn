@@ -1,6 +1,6 @@
 ﻿# OptiLearn Frontend
 
-The Next.js user interface for **OptiLearn**, an AI learning companion maintained by Nikky. It provides the landing page, Google sign-in flow, classrooms, file management, and tutor chat.
+The Next.js user interface for **OptiLearn**, an AI learning companion built and developed by Nikky. It provides the landing page, Google sign-in flow, classrooms, file management, and tutor chat.
 
 ## Stack
 

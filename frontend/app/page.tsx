@@ -206,7 +206,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <Image src="/optilearn-wordmark.svg" alt="OptiLearn" width={152} height={32} />
             <p className="text-sm text-muted-foreground">
-              Maintained by Nikky
+              Built and developed by Nikky
             </p>
           </div>
         </div>
