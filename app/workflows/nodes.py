@@ -116,8 +116,8 @@ async def download_node(state: IndexingState) -> Dict[str, Any]:
             user_id=state["user_id"],
         )
     except Exception as e:
-        logger.error(f"[download] Failed to download {file_name}: {str(e)}")
-        return {"status": "failed", "error": f"Download failed: {str(e)}"}
+        logger.error("[download] Failed to download file (%s)", type(e).__name__)
+        return {"status": "failed", "error": "Download failed. Please try syncing the file again."}
 
     # Short txn 2: Save download result 
     async with AsyncSessionLocal() as db:
@@ -220,10 +220,10 @@ async def process_node(state: IndexingState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"[process] Failed for '{file_name}': {e}")
+        logger.error("[process] Document processing failed (%s)", type(e).__name__)
         return {
             "status": "failed",
-            "error": f"Processing failed: {str(e)}",
+            "error": "Document processing failed. Please try again.",
             "file_type": file_type,
         }
 
@@ -286,8 +286,8 @@ async def embed_node(state: IndexingState) -> Dict[str, Any]:
             "status": "embedding",
         }
     except Exception as e:
-        logger.error(f"[embed] Embedding failed: {e}")
-        return {"status": "failed", "error": f"Embedding failed: {str(e)}"}
+        logger.error("[embed] Embedding failed (%s)", type(e).__name__)
+        return {"status": "failed", "error": "Document embedding failed. Please try again."}
 
 
 # Node 5: Update DB 

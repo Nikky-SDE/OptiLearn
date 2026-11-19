@@ -12,7 +12,6 @@ Usage:
 """
 
 import logging
-import traceback
 from datetime import datetime, timezone
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -141,8 +140,10 @@ async def run_indexing(
 
     except Exception as e:
         logger.error(
-            f"Workflow execution failed for file_id={file_id}: {e}\n"
-            f"{traceback.format_exc()}"
+            "Workflow execution failed for file_id=%s (%s)",
+            file_id,
+            type(e).__name__,
+            exc_info=True,
         )
         try:
             async with AsyncSessionLocal() as db:
@@ -151,7 +152,7 @@ async def run_indexing(
                     .where(File.id == file_id)
                     .values(
                         processing_status="failed",
-                        processing_error=str(e)[:500],  # Truncate to avoid column overflow
+                        processing_error="Indexing failed. Please try again.",
                         updated_at=datetime.now(timezone.utc),
                     )
                 )
@@ -160,4 +161,4 @@ async def run_indexing(
             logger.error(
                 f"CRITICAL: Could not update file {file_id} status to 'failed' in DB: {db_err}"
             )
-        return {"status": "failed", "error": str(e)}
+        return {"status": "failed", "error": "Indexing failed. Please try again."}

@@ -109,7 +109,7 @@ class GoogleAuthService:
                 "expiry": credentials.expiry
             }
         except Exception as e:
-            raise GoogleAuthError(f"Failed to exchange code: {str(e)}")
+            raise GoogleAuthError("Google sign-in could not be completed.") from e
 
     async def get_user_info(self, token_info: dict) -> dict:
         """
@@ -137,7 +137,7 @@ class GoogleAuthService:
             user_info = service.userinfo().get().execute()
             return user_info
         except Exception as e:
-            raise GoogleAuthError(f"Failed to get user info: {str(e)}")
+            raise GoogleAuthError("Google profile lookup failed.") from e
 
     async def create_or_update_user(
         self, 
@@ -240,6 +240,6 @@ class GoogleAuthService:
                 # Do NOT commit here — the caller's get_db() dependency owns the transaction.
                 await db.flush()
             except Exception as e:
-                raise GoogleAuthError(f"Failed to refresh token: {str(e)}")
+                raise GoogleAuthError("Google credentials could not be refreshed.") from e
         
         return creds
