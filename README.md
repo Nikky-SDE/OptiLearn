@@ -41,8 +41,6 @@ Courses are synced from Google Classroom; the current API does not create standa
 
 ## Screenshots
 
-The screenshots supplied with this project are not currently stored in the repository. Save each image to the path shown below, then the Markdown links will render on GitHub.
-
 <!-- Save supplied screenshot 1 (landing page) to docs/screenshots/landing-page.png. -->
 ![OptiLearn landing page](docs/screenshots/landing-page.png)
 
