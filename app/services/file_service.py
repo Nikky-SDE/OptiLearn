@@ -1,10 +1,8 @@
 import asyncio
-import os
 import hashlib
 import io
 import uuid
 from pathlib import Path
-from typing import Optional
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -13,6 +11,19 @@ from google.oauth2.credentials import Credentials
 from app.core.config import settings
 from app.core.exceptions import DriveAPIError, ProcessingError
 from app.core.utils import detect_file_type
+
+MAX_DRIVE_FILE_BYTES = 100 * 1024 * 1024
+SUPPORTED_LOCAL_EXTENSIONS = {
+    ".pdf", ".docx", ".pptx", ".txt", ".md",
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tiff",
+}
+
+
+def _safe_local_extension(file_name: str) -> str:
+    """Return a supported suffix without using a remote filename as a path."""
+    basename = Path((file_name or "").replace("\\", "/")).name
+    extension = Path(basename).suffix.lower()
+    return extension if extension in SUPPORTED_LOCAL_EXTENSIONS else ".bin"
 
 
 class FileService:
@@ -55,7 +66,7 @@ class FileService:
         except DriveAPIError:
             raise
         except Exception as e:
-            raise DriveAPIError(f"Failed to download file {file_id}: {str(e)}")
+            raise DriveAPIError("Failed to download the requested file.") from e
 
     def _download_file_sync(
         self, file_id: str, file_name: str, user_id: str
@@ -64,7 +75,7 @@ class FileService:
         user_dir = self.storage_dir / user_id
         user_dir.mkdir(parents=True, exist_ok=True)
 
-        unique_filename = f"{uuid.uuid4()}_{file_name}"
+        unique_filename = f"{uuid.uuid4()}{_safe_local_extension(file_name)}"
         local_path = user_dir / unique_filename
 
         # Download file content directly — skip metadata pre-check
@@ -78,7 +89,9 @@ class FileService:
 
         done = False
         while not done:
-            status, done = downloader.next_chunk()
+            _, done = downloader.next_chunk()
+            if fh.tell() > MAX_DRIVE_FILE_BYTES:
+                raise DriveAPIError("Downloaded file exceeds the 100 MB limit.")
 
         with open(local_path, 'wb') as f:
             f.write(fh.getvalue())
@@ -107,7 +120,7 @@ class FileService:
                 fields="id,name,mimeType,size,webViewLink,createdTime,modifiedTime"
             ).execute()
         except Exception as e:
-            raise DriveAPIError(f"Failed to get metadata for {file_id}: {str(e)}")
+            raise DriveAPIError("Failed to retrieve file metadata.") from e
     
     def _calculate_hash(self, file_path: Path) -> str:
         """Calculate SHA-256 hash of a file."""

@@ -121,10 +121,10 @@ async def sync_courses_from_classroom(
     
     except ClassroomAPIError as e:
         raise to_http_exception(e)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to sync courses: {str(e)}"
+            detail="Failed to sync courses. Please try again."
         )
 
 
@@ -182,7 +182,11 @@ async def list_course_files(
         raise HTTPException(status_code=404, detail="Course not found")
     
     result = await db.execute(
-        select(File).where(File.course_id == course_id, File.is_deleted == False)
+        select(File).where(
+            File.course_id == course_id,
+            File.user_id == user.id,
+            File.is_deleted == False,
+        )
     )
     files = result.scalars().all()
     
@@ -288,13 +292,15 @@ async def _sync_course_files_background(user_id: str, course_id: str, classroom_
             )
         
         except Exception as e:
-            logger.error(f"[sync] Background sync FAILED: {e}", exc_info=True)
+            logger.error(
+                "[sync] Background sync failed (%s)", type(e).__name__, exc_info=True
+            )
             await db.execute(
                 update(Course)
                 .where(Course.id == course_id)
                 .values(
                     sync_status="failed",
-                    sync_error=str(e),
+                    sync_error="Classroom sync failed. Please try again.",
                     updated_at=datetime.now(timezone.utc)
                 )
             )

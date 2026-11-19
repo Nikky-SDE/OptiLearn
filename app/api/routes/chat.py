@@ -16,7 +16,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes.auth import get_current_user
@@ -37,9 +37,9 @@ router = APIRouter()
 class QueryRequest(BaseModel):
     """Request body for the chat query endpoint."""
 
-    question: str
-    session_id: Optional[str] = None
-    course_id: Optional[str] = None
+    question: str = Field(min_length=1, max_length=10_000)
+    session_id: Optional[str] = Field(default=None, max_length=128)
+    course_id: Optional[str] = Field(default=None, max_length=255)
 
 
 class CitationResponse(BaseModel):
@@ -79,6 +79,12 @@ class HistoryResponse(BaseModel):
     session_id: str
     messages: List[MessageResponse]
     message_count: int
+
+
+def _session_belongs_to_user(session_id: str, user_id: str) -> bool:
+    """Session IDs are namespaced as ``{user_id}_{session_nonce}``."""
+    prefix = f"{user_id}_"
+    return session_id.startswith(prefix) and len(session_id) > len(prefix)
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────
@@ -124,6 +130,11 @@ async def chat_query(
 
     # ── Session management ────────────────────────────────────────
     session_id = request.session_id or f"{user.id}_{uuid.uuid4().hex[:12]}"
+    if not _session_belongs_to_user(session_id, user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access your own sessions.",
+        )
 
     try:
         # ── Build checkpointer off-thread to avoid blocking event loop ─
@@ -178,10 +189,10 @@ async def chat_query(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Chat query failed: {e}", exc_info=True)
+        logger.error("Chat query failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Query failed: {str(e)}",
+            detail="The chat request failed. Please try again.",
         )
 
 
@@ -216,6 +227,11 @@ async def chat_query_stream(
         )
 
     session_id = request.session_id or f"{user.id}_{uuid.uuid4().hex[:12]}"
+    if not _session_belongs_to_user(session_id, user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access your own sessions.",
+        )
 
     checkpointer = await asyncio.to_thread(_get_checkpointer)
 
@@ -260,7 +276,7 @@ async def chat_history(
     Returns all human/AI message pairs stored in memory
     for the given session.
     """
-    if not session_id.startswith(user.id):
+    if not _session_belongs_to_user(session_id, user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only access your own sessions.",
@@ -285,7 +301,7 @@ async def delete_session(
 
     Frees memory and resets the chat context for the session.
     """
-    if not session_id.startswith(user.id):
+    if not _session_belongs_to_user(session_id, user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own sessions.",

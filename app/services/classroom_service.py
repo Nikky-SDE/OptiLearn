@@ -56,7 +56,7 @@ class ClassroomService:
             return courses
         
         except HttpError as e:
-            raise ClassroomAPIError(f"Failed to list courses: {str(e)}")
+            raise ClassroomAPIError("Failed to list courses.") from e
     
     @backoff.on_exception(backoff.expo, HttpError, max_tries=3)
     async def get_course(self, course_id: str) -> dict:
@@ -66,7 +66,7 @@ class ClassroomService:
                 lambda: self.classroom_service.courses().get(id=course_id).execute()
             )
         except HttpError as e:
-            raise ClassroomAPIError(f"Failed to get course {course_id}: {str(e)}")
+            raise ClassroomAPIError("Failed to get course details.") from e
     
     @backoff.on_exception(backoff.expo, HttpError, max_tries=3)
     async def list_coursework(self, course_id: str, page_size: int = 50) -> List[dict]:
@@ -93,7 +93,7 @@ class ClassroomService:
             return coursework
         
         except HttpError as e:
-            raise ClassroomAPIError(f"Failed to list coursework for {course_id}: {str(e)}")
+            raise ClassroomAPIError("Failed to list course work.") from e
     
     @backoff.on_exception(backoff.expo, HttpError, max_tries=3)
     async def list_coursework_materials(self, course_id: str, page_size: int = 50) -> List[dict]:
@@ -120,7 +120,7 @@ class ClassroomService:
             return materials
         
         except HttpError as e:
-            raise ClassroomAPIError(f"Failed to list materials for {course_id}: {str(e)}")
+            raise ClassroomAPIError("Failed to list course materials.") from e
     
     @backoff.on_exception(backoff.expo, HttpError, max_tries=3)
     async def list_announcements(self, course_id: str, page_size: int = 50) -> List[dict]:
@@ -147,7 +147,7 @@ class ClassroomService:
             return announcements
         
         except HttpError as e:
-            raise ClassroomAPIError(f"Failed to list announcements for {course_id}: {str(e)}")
+            raise ClassroomAPIError("Failed to list course announcements.") from e
     
     async def extract_drive_files(self, coursework_or_material: dict) -> List[dict]:
         """

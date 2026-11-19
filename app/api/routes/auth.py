@@ -292,10 +292,10 @@ async def callback(
     
     except GoogleAuthError as e:
         raise to_http_exception(e)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Authentication failed: {str(e)}"
+            detail="Authentication failed. Please try again."
         )
 
 
